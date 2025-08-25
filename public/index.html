@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Quest Trade</title>
+<link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Quest Trade</div>
+  <div class="userbar">
+    <span id="greet"></span>
+    <span id="balance"></span>
+    <span id="onlineCount"></span>
+  </div>
+</header>
+<main id="app" class="app hidden">
+  <nav class="tabs">
+    <button data-tab="quests" class="active">Quests</button>
+    <button data-tab="inventory">Inventory</button>
+    <button data-tab="offers">Trade Offers</button>
+    <button data-tab="online">Online</button>
+  </nav>
+  <section id="tab-quests" class="tab active">
+    <div id="questsList" class="grid"></div>
+  </section>
+  <section id="tab-inventory" class="tab">
+    <div id="inventoryList" class="grid"></div>
+  </section>
+  <section id="tab-offers" class="tab">
+    <div class="split">
+      <div>
+        <h3>Incoming</h3>
+        <div id="incomingOffers" class="stack"></div>
+      </div>
+      <div>
+        <h3>Outgoing</h3>
+        <div id="outgoingOffers" class="stack"></div>
+      </div>
+    </div>
+    <div class="composer">
+      <h3>New Trade</h3>
+      <div class="composer-row">
+        <label>To</label>
+        <select id="tradeTo"></select>
+      </div>
+      <div class="composer-row">
+        <label>Offer Items</label>
+        <div id="offerItems" class="mini-grid"></div>
+        <button id="addOfferItem">Add Item</button>
+      </div>
+      <div class="composer-row">
+        <label>Offer Money</label>
+        <input id="offerMoney" type="number" min="0" value="0"/>
+      </div>
+      <div class="composer-row">
+        <label>Request Items</label>
+        <div id="requestItems" class="mini-grid"></div>
+        <button id="addRequestItem">Add Item</button>
+      </div>
+      <button id="sendOffer">Send Offer</button>
+    </div>
+  </section>
+  <section id="tab-online" class="tab">
+    <div id="onlineUsers" class="grid"></div>
+  </section>
+</main>
+<div id="auth" class="auth">
+  <div class="card auth-card">
+    <h2>Create Username</h2>
+    <input id="usernameInput" placeholder="username" maxlength="20"/>
+    <button id="createUsername">Enter</button>
+  </div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
