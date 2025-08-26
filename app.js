@@ -1,4 +1,4 @@
-import { auth, db, rdb, signInAnonymously, onAuthStateChanged, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, addDoc, serverTimestamp, runTransaction, getDocs, orderBy, limit, ref, onDisconnect, onValue, rset, rts } from "./firebase.js";
+import { CONFIG_FILLED, auth, db, rdb, signInAnonymously, onAuthStateChanged, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, addDoc, serverTimestamp, runTransaction, getDocs, orderBy, limit, ref, onDisconnect, onValue, rset, rts } from "./firebase.js";
 import { ITEMS, ITEM_MAP } from "./items.js";
 import { QUESTS } from "./quests.js";
 
@@ -7,8 +7,9 @@ const state={uid:null,user:null,usersCache:new Map(),onlineSet:new Set(),incomin
 
 function fmt(n){return new Intl.NumberFormat().format(n)}
 function now(){return Date.now()}
-function showApp(){ $("#auth").style.display="none"; $("#app").classList.remove("hidden"); }
-function showAuth(){ $("#auth").style.display="flex"; $("#app").classList.add("hidden"); }
+function show(el){el.classList.remove("hidden")} function hide(el){el.classList.add("hidden")}
+function showApp(){ hide($("#auth")); show($("#app")); }
+function showAuth(){ show($("#auth")); hide($("#app")); }
 function setError(msg){ $("#userError").textContent=msg||""; }
 
 async function ensureUserDoc(uid){
@@ -21,9 +22,11 @@ async function ensureUserDoc(uid){
 }
 
 function presence(uid){
-  const sref=ref(rdb,"status/"+uid);
-  onDisconnect(sref).set({state:"offline",t:rts()});
-  rset(sref,{state:"online",t:rts()});
+  try{
+    const sref=ref(rdb,"status/"+uid);
+    onDisconnect(sref).set({state:"offline",t:rts()});
+    rset(sref,{state:"online",t:rts()});
+  }catch(e){}
 }
 
 function tabs(){
@@ -194,6 +197,15 @@ function listenOffers(){
   });
 }
 
+function listenPresence(){
+  try{
+    onValue(ref(rdb,"status"),s=>{
+      const val=s.val()||{}; state.onlineSet=new Set(Object.keys(val).filter(k=>val[k].state==="online"));
+      renderOnline();
+    });
+  }catch(e){}
+}
+
 async function cacheUser(uid){
   if(state.usersCache.has(uid)) return state.usersCache.get(uid);
   const snap=await getDoc(doc(db,"users",uid));
@@ -209,24 +221,10 @@ function renderOnline(){
     const u=state.usersCache.get(id)||{username:id.slice(0,6)};
     const div=document.createElement("div"); div.className="card";
     div.innerHTML='<div class="title">'+(u.username||id.slice(0,6))+'</div><div class="row"><span class="badge">online</span><button class="btn">Trade</button></div>';
-    div.querySelector("button").addEventListener("click",()=>{ $("#tradeTo").value=id; $('[data-tab=\"offers\"]').click(); });
+    div.querySelector("button").addEventListener("click",()=>{ $("#tradeTo").value=id; $('[data-tab="offers"]').click(); });
     wrap.appendChild(div);
   });
   renderHeader();
-}
-
-function listenPresence(){
-  onValue(ref(rdb,"status"),s=>{
-    const val=s.val()||{}; state.onlineSet=new Set(Object.keys(val).filter(k=>val[k].state==="online"));
-    renderOnline();
-  });
-}
-
-function onUserDoc(){
-  onSnapshot(doc(db,"users",state.uid),snap=>{
-    state.user={uid:state.uid,...(snap.data()||{})};
-    renderHeader(); renderQuests(); renderInventory();
-  });
 }
 
 async function decideAuthUI(){
@@ -237,31 +235,49 @@ async function decideAuthUI(){
 }
 
 async function onAuth(){
+  if(!CONFIG_FILLED){
+    showAuth();
+    setError("Add your Firebase config in firebase.js (apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId, databaseURL).");
+    return;
+  }
   onAuthStateChanged(auth,async user=>{
-    if(!user){ await signInAnonymously(auth); return; }
-    state.uid=user.uid;
-    await ensureUserDoc(user.uid);
-    presence(user.uid);
-    await cacheUser(user.uid);
-    onUserDoc();
-    listenPresence();
-    listenOffers();
-    await decideAuthUI();
+    try{
+      if(!user){
+        try{
+          await signInAnonymously(auth);
+          return;
+        }catch(e){
+          if(e.code==="auth/operation-not-allowed"){
+            showAuth();
+            setError("Enable Anonymous sign-in in Firebase Console → Authentication → Sign-in method.");
+            return;
+          }else{
+            showAuth();
+            setError("Auth error: "+(e.code||e.message));
+            return;
+          }
+        }
+      }
+      state.uid=user.uid;
+      await ensureUserDoc(user.uid);
+      presence(user.uid);
+      await cacheUser(user.uid);
+      onUserDoc();
+      listenPresence();
+      listenOffers();
+      await decideAuthUI();
+    }catch(err){
+      showAuth();
+      setError("Init failed: "+(err.code||err.message));
+    }
   });
 }
 
-async function createUsername(){
-  const btn=$("#createUsername"); const input=$("#usernameInput"); const v=(input.value||"").trim();
-  setError("");
-  if(!v){ setError("Enter a username"); return; }
-  btn.disabled=true;
-  const qy=query(collection(db,"users"),where("usernameLower","==",v.toLowerCase()),limit(1));
-  const qs=await getDocs(qy);
-  if(!qs.empty){ setError("Username taken"); btn.disabled=false; return; }
-  await updateDoc(doc(db,"users",state.uid),{username:v,usernameLower:v.toLowerCase()});
-  state.usersCache.set(state.uid,{...(state.usersCache.get(state.uid)||{}),username:v,usernameLower:v.toLowerCase()});
-  showApp();
-  btn.disabled=false;
+function onUserDoc(){
+  onSnapshot(doc(db,"users",state.uid),snap=>{
+    state.user={uid:state.uid,...(snap.data()||{})};
+    renderHeader(); renderQuests(); renderInventory();
+  });
 }
 
 function init(){
@@ -272,6 +288,24 @@ function init(){
   $("#createUsername").addEventListener("click",createUsername);
   $("#usernameInput").addEventListener("keydown",e=>{ if(e.key==="Enter") createUsername(); });
   onAuth();
+}
+
+async function createUsername(){
+  const btn=$("#createUsername"); const input=$("#usernameInput"); const v=(input.value||"").trim();
+  setError("");
+  if(!v){ setError("Enter a username"); return; }
+  btn.disabled=true;
+  try{
+    const qy=query(collection(db,"users"),where("usernameLower","==",v.toLowerCase()),limit(1));
+    const qs=await getDocs(qy);
+    if(!qs.empty){ setError("Username taken"); btn.disabled=false; return; }
+    await updateDoc(doc(db,"users",state.uid),{username:v,usernameLower:v.toLowerCase()});
+    showApp();
+  }catch(e){
+    setError("Save failed: "+(e.code||e.message));
+  }finally{
+    btn.disabled=false;
+  }
 }
 
 init();
