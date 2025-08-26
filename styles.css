@@ -1,0 +1,28 @@
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:#0b1220;color:#e9eef5;font-family:Inter,system-ui,Arial,sans-serif}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0f1a32;border-bottom:1px solid #1f2a44;position:sticky;top:0;z-index:5}
+.brand{font-weight:700;letter-spacing:.5px}
+.userbar{display:flex;gap:14px;color:#c9d4f1}
+.app.hidden{display:none}
+.tabs{display:flex;gap:8px;padding:12px 16px;background:#0f1a32;border-bottom:1px solid #1f2a44;position:sticky;top:48px;z-index:4}
+.tabs button{background:#0c1730;border:1px solid #1f2a44;color:#e9eef5;border-radius:12px;padding:8px 14px;cursor:pointer}
+.tabs button.active{outline:2px solid #f9ba00}
+.tab{padding:16px;display:none}
+.tab.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{background:#0c1730;border:1px solid #1f2a44;border-radius:16px;box-shadow:0 8px 18px rgba(0,0,0,.25);padding:14px}
+.meta{color:#97a6c4;font-size:12px}
+.title{font-weight:700;margin-bottom:6px}
+.btn{background:#1a2e5c;border:1px solid #2b4171;border-radius:12px;padding:8px 12px;color:#e9eef5;cursor:pointer}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #2b4171;background:#0f1a32;color:#c9d4f1}
+.auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+.auth-card{width:320px}
+.auth input{width:100%;padding:10px;border-radius:12px;border:1px solid #2b4171;background:#0f1a32;color:#e9eef5;margin:10px 0}
+.mini-grid{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
+.composer{margin-top:16px}
+.composer-row{display:grid;grid-template-columns:100px 1fr;gap:10px;align-items:start;margin:8px 0}
+select,input{background:#0f1a32;color:#e9eef5;border:1px solid #2b4171;border-radius:10px;padding:8px}
+h3{margin:8px 0 4px}
